@@ -1,0 +1,60 @@
+[project]
+name = "lab4"
+version = "0.1.0"
+description = "ЛР №4 «Data Persistence & Web Interfaces»: REST API «Міський транспорт» (варіант 15)"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.162.0",
+    "psycopg[binary]>=3.3.6",
+    "sqlmodel>=0.0.48",
+    "uvicorn>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "mypy>=2.4.0",
+    "pytest>=9.1.1",
+    "ruff>=0.17.3",
+]
+
+# Проєкт запускається як набір модулів із кореня (uv run uvicorn lab4.restapi:app),
+# тому збирати його як пакет не потрібно.
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle (помилки)
+    "W",   # pycodestyle (попередження)
+    "F",   # pyflakes
+    "I",   # isort: порядок імпортів
+    "UP",  # pyupgrade: сучасний синтаксис
+    "B",   # flake8-bugbear: типові баги
+    "SIM", # flake8-simplify
+    "N",   # pep8-naming
+    "RUF", # правила самого Ruff
+]
+# RUF001-003 скаржаться на кириличні літери, схожі на латинські («А», «С», «і»),
+# а в нас українські тексти і держномери — це очікувано.
+ignore = ["RUF001", "RUF002", "RUF003"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+plugins = ["pydantic.mypy"]
+exclude = ["^\\.venv/"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
