@@ -13,6 +13,14 @@ uv run uvicorn lab4.restapi:app --reload
 
 Документація API: http://127.0.0.1:8000/docs
 
+Сховище обирається змінною `STORAGE` (`postgres` за замовчуванням або `memory`).
+
+## Документація
+
+- [ERD](docs/erd.md): модель бази даних
+- [C4 Code](docs/c4_code.md): діаграма класів
+- [Демонстрація](docs/demo.md): curl-команди з очікуваними відповідями та SQL для DBeaver
+
 ## Перевірка якості коду
 
 ```bash

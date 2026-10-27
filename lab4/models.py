@@ -8,7 +8,8 @@
 
 from enum import StrEnum
 
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import Column, UniqueConstraint
+from sqlalchemy import Enum as SAEnum
 from sqlmodel import Field, Relationship, SQLModel
 
 # Зв'язки ORM лише для читання: правила видалення (CASCADE / RESTRICT / SET NULL)
@@ -65,7 +66,18 @@ class Route(SQLModel, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
     number: str = Field(max_length=4)
-    transport_type: TransportType
+    # Без values_callable SQLAlchemy зберігає в PG-enum імена членів ("BUS"),
+    # а нам потрібні ті самі значення, що й в API ("bus").
+    transport_type: TransportType = Field(
+        sa_column=Column(
+            SAEnum(
+                TransportType,
+                name="transport_type",
+                values_callable=lambda kinds: [k.value for k in kinds],
+            ),
+            nullable=False,
+        )
+    )
     name: str = Field(max_length=255)
 
     vehicles: list["Vehicle"] = Relationship(
