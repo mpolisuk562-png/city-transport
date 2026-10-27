@@ -11,6 +11,11 @@ from enum import StrEnum
 from sqlalchemy import UniqueConstraint
 from sqlmodel import Field, Relationship, SQLModel
 
+# Зв'язки ORM лише для читання: правила видалення (CASCADE / RESTRICT / SET NULL)
+# виконує сама БД. Інакше SQLAlchemy перед DELETE маршруту спробує обнулити
+# vehicles.route_id і замість зрозумілого порушення FK ми отримаємо NOT NULL.
+VIEW_ONLY = {"viewonly": True}
+
 
 class TransportType(StrEnum):
     BUS = "bus"
@@ -48,7 +53,9 @@ class Driver(SQLModel, table=True):
     phone: str = Field(max_length=13, unique=True)
     email: str = Field(max_length=255, unique=True)
 
-    vehicles: list["Vehicle"] = Relationship(back_populates="driver")
+    vehicles: list["Vehicle"] = Relationship(
+        back_populates="driver", sa_relationship_kwargs=VIEW_ONLY
+    )
 
 
 class Route(SQLModel, table=True):
@@ -61,8 +68,12 @@ class Route(SQLModel, table=True):
     transport_type: TransportType
     name: str = Field(max_length=255)
 
-    vehicles: list["Vehicle"] = Relationship(back_populates="route")
-    stops: list["Stop"] = Relationship(back_populates="routes", link_model=RouteStop)
+    vehicles: list["Vehicle"] = Relationship(
+        back_populates="route", sa_relationship_kwargs=VIEW_ONLY
+    )
+    stops: list["Stop"] = Relationship(
+        back_populates="routes", link_model=RouteStop, sa_relationship_kwargs=VIEW_ONLY
+    )
 
 
 class Stop(SQLModel, table=True):
@@ -73,7 +84,9 @@ class Stop(SQLModel, table=True):
     latitude: float = Field(ge=-90, le=90)
     longitude: float = Field(ge=-180, le=180)
 
-    routes: list[Route] = Relationship(back_populates="stops", link_model=RouteStop)
+    routes: list[Route] = Relationship(
+        back_populates="stops", link_model=RouteStop, sa_relationship_kwargs=VIEW_ONLY
+    )
 
 
 class Vehicle(SQLModel, table=True):
@@ -90,5 +103,7 @@ class Vehicle(SQLModel, table=True):
         default=None, foreign_key="drivers.id", ondelete="SET NULL", index=True
     )
 
-    route: Route | None = Relationship(back_populates="vehicles")
-    driver: Driver | None = Relationship(back_populates="vehicles")
+    route: Route | None = Relationship(back_populates="vehicles", sa_relationship_kwargs=VIEW_ONLY)
+    driver: Driver | None = Relationship(
+        back_populates="vehicles", sa_relationship_kwargs=VIEW_ONLY
+    )
