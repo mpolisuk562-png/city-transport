@@ -13,6 +13,8 @@ uv run uvicorn lab4.restapi:app --reload
 
 Документація API: http://127.0.0.1:8000/docs
 
+`init_db` генерує водіїв і транспорт випадково, але відтворювано (той самий `--seed` дає ті самі дані). Кількість задається параметрами: `uv run python -m lab4.init_db --drivers 50 --vehicles 100 --seed 7`.
+
 Сховище обирається змінною `STORAGE` (`postgres` за замовчуванням або `memory`).
 
 ## Документація

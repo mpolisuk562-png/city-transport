@@ -12,7 +12,7 @@ Swagger UI: http://127.0.0.1:8000/docs
 
 Команди нижче запускаються з кореня проєкту. Тіла запитів лежать у `docs/requests/*.json` і передаються через `--data-binary @файл`. На Windows це важливо: Git Bash і PowerShell 5.1 передають кирилицю в аргументах командного рядка не в UTF-8, і сервер відповідає `400 There was an error parsing the body`. У PowerShell пишіть `curl.exe`, а не `curl`, бо `curl` там є аліасом `Invoke-WebRequest`.
 
-Очікувані відповіді нижче наведено для щойно ініціалізованої БД (`init_db`: 134 записи).
+Очікувані відповіді нижче наведено для щойно ініціалізованої БД із параметрами за замовчуванням (`uv run python -m lab4.init_db`: 25 водіїв, 40 машин, `--seed 42`, разом 167 записів). Водії та машини генеруються випадково, але той самий seed щоразу дає ті самі дані. З іншими `--drivers`, `--vehicles` чи `--seed` id, номери та імена в прикладах будуть іншими.
 
 ---
 
@@ -59,18 +59,25 @@ curl -i http://127.0.0.1:8000/routes/13/vehicles
 
 ```
 HTTP/1.1 200 OK
-[{"id":17,"plate_number":"ВС4701АВ","model":"MAN Lion's City","year":2021,"route_id":13,"driver_id":3},
- {"id":18,"plate_number":"ВС4702АВ","model":"MAN Lion's City","year":2021,"route_id":13,"driver_id":null}]
+[{"id":13,"plate_number":"НС2536МХ","model":"Електрон А185","year":2024,"route_id":13,"driver_id":2},
+ {"id":15,"plate_number":"ВС3044ВХ","model":"Електрон А185","year":2018,"route_id":13,"driver_id":22},
+ {"id":25,"plate_number":"НС9189ВМ","model":"Електрон А185","year":2017,"route_id":13,"driver_id":23},
+ {"id":37,"plate_number":"ВС4920ОО","model":"MAN Lion's City","year":2020,"route_id":13,"driver_id":14},
+ {"id":39,"plate_number":"ВС4978ОІ","model":"Богдан А70132","year":2014,"route_id":13,"driver_id":19}]
 ```
 
+Машини водія (зв'язок Driver 1:N Vehicle):
+
 ```bash
-curl -i http://127.0.0.1:8000/drivers/5/vehicles
+curl -i http://127.0.0.1:8000/drivers/2/vehicles
 ```
 
 ```
 HTTP/1.1 200 OK
-[{"id":6,"plate_number":"ВС0701ТМ","model":"Electron T5L64","year":2021,"route_id":4,"driver_id":5},
- {"id":20,"plate_number":"ВС5302АВ","model":"Богдан А70132","year":2011,"route_id":14,"driver_id":5}]
+[{"id":4,"plate_number":"ВС0117ОЕ","model":"Electron T5L64","year":2015,"route_id":4,"driver_id":2},
+ {"id":13,"plate_number":"НС2536МХ","model":"Електрон А185","year":2024,"route_id":13,"driver_id":2},
+ {"id":23,"plate_number":"ВС4325ОР","model":"Tatra KT4","year":1985,"route_id":6,"driver_id":2},
+ {"id":35,"plate_number":"ВС6311МХ","model":"MAN Lion's City","year":2023,"route_id":14,"driver_id":2}]
 ```
 
 ## 4. CREATE
@@ -86,16 +93,16 @@ curl -i -X POST http://127.0.0.1:8000/vehicles -H "Content-Type: application/jso
 
 ```
 HTTP/1.1 201 Created
-{"id":21,"plate_number":"ВС7777АК","model":"Електрон А185","year":2024,"route_id":13,"driver_id":5}
+{"id":41,"plate_number":"ВС7777АК","model":"Електрон А185","year":2024,"route_id":13,"driver_id":5}
 ```
 
 ```bash
-curl -i http://127.0.0.1:8000/vehicles/21
+curl -i http://127.0.0.1:8000/vehicles/41
 ```
 
 ```
 HTTP/1.1 200 OK
-{"id":21,"plate_number":"ВС7777АК","model":"Електрон А185","year":2024,"route_id":13,"driver_id":5}
+{"id":41,"plate_number":"ВС7777АК","model":"Електрон А185","year":2024,"route_id":13,"driver_id":5}
 ```
 
 ## 5. UPDATE
@@ -108,12 +115,12 @@ PUT змінює лише передані поля. `null` дозволений
 ```
 
 ```bash
-curl -i -X PUT http://127.0.0.1:8000/vehicles/21 -H "Content-Type: application/json" --data-binary @docs/requests/vehicle_update.json
+curl -i -X PUT http://127.0.0.1:8000/vehicles/41 -H "Content-Type: application/json" --data-binary @docs/requests/vehicle_update.json
 ```
 
 ```
 HTTP/1.1 200 OK
-{"id":21,"plate_number":"ВС7777АК","model":"Електрон А185","year":2024,"route_id":14,"driver_id":null}
+{"id":41,"plate_number":"ВС7777АК","model":"Електрон А185","year":2024,"route_id":14,"driver_id":null}
 ```
 
 > На цьому кроці зручно перевірити в DBeaver, що зміни дійсно в БД (розділ 9).
@@ -121,7 +128,7 @@ HTTP/1.1 200 OK
 ## 6. DELETE
 
 ```bash
-curl -i -X DELETE http://127.0.0.1:8000/vehicles/21
+curl -i -X DELETE http://127.0.0.1:8000/vehicles/41
 ```
 
 ```
@@ -129,12 +136,12 @@ HTTP/1.1 204 No Content
 ```
 
 ```bash
-curl -i http://127.0.0.1:8000/vehicles/21
+curl -i http://127.0.0.1:8000/vehicles/41
 ```
 
 ```
 HTTP/1.1 404 Not Found
-{"detail":"Vehicle з id=21 не знайдено"}
+{"detail":"Vehicle з id=41 не знайдено"}
 ```
 
 ## 7. Валідація regex: 422
@@ -183,7 +190,7 @@ HTTP/1.1 422 Unprocessable Content
 
 ## 8. Порушення цілісності: 409
 
-Дублікат держномера (`docs/requests/vehicle_duplicate.json`, номер `ВС0101ТМ` уже є в БД):
+Дублікат держномера (`docs/requests/vehicle_duplicate.json`, номер `ВС4342ВМ` уже є в БД):
 
 ```bash
 curl -i -X POST http://127.0.0.1:8000/vehicles -H "Content-Type: application/json" --data-binary @docs/requests/vehicle_duplicate.json
@@ -191,7 +198,7 @@ curl -i -X POST http://127.0.0.1:8000/vehicles -H "Content-Type: application/jso
 
 ```
 HTTP/1.1 409 Conflict
-{"detail":"Конфлікт даних: Key (plate_number)=(ВС0101ТМ) already exists."}
+{"detail":"Конфлікт даних: Key (plate_number)=(ВС4342ВМ) already exists."}
 ```
 
 Неіснуючий маршрут, тобто порушення FOREIGN KEY (`docs/requests/vehicle_bad_route.json`, `route_id: 999`):
@@ -236,7 +243,9 @@ WHERE v.plate_number = 'ВС7777АК';
 
 | id | plate_number | model | year | route_number | transport_type | driver |
 |---|---|---|---|---|---|---|
-| 21 | ВС7777АК | Електрон А185 | 2024 | 53 | bus | NULL |
+| 41 | ВС7777АК | Електрон А185 | 2024 | 53 | bus | NULL |
+
+Одразу після кроку 4 (CREATE), до оновлення, той самий запит покаже маршрут 47 і водія «Лисенко Ірина Миколаївна».
 
 Після кроку 6 (DELETE) той самий запит повертає 0 рядків.
 
@@ -251,7 +260,7 @@ WHERE r.number = '47' AND r.transport_type = 'bus'
 ORDER BY rs.seq;
 ```
 
-Кількість записів у кожній таблиці (разом 134 після `init_db`):
+Кількість записів у кожній таблиці (разом 167 після `init_db` з параметрами за замовчуванням):
 
 ```sql
 SELECT 'routes' AS tbl, count(*) FROM routes
