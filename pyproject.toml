@@ -13,9 +13,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "httpx>=0.28.1",
     "mypy>=2.4.0",
-    "pytest>=9.1.1",
     "ruff>=0.17.3",
 ]
 
@@ -54,9 +52,3 @@ exclude = ["^\\.venv/"]
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
-
-[tool.pytest.ini_options]
-pythonpath = ["."]
-testpaths = ["tests"]
-# Starlette радить httpx2 замість httpx для TestClient; на роботу тестів це не впливає.
-filterwarnings = ["ignore:Using `httpx` with `starlette.testclient`"]

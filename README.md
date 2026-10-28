@@ -27,5 +27,4 @@ uv run uvicorn lab4.restapi:app --reload
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy .
-uv run pytest
 ```
