@@ -1,5 +1,3 @@
-"""REST-ресурс /drivers (водії)."""
-
 from fastapi import APIRouter
 
 from lab4.dependencies import DriverRepo

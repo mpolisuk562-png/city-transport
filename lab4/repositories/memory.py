@@ -1,9 +1,3 @@
-"""Репозиторій у пам'яті — демонстрація принципу Open/Closed.
-
-Цей клас лише наслідує Repository: роутери та PostgresRepository
-для нього не змінювались. Вмикається змінною оточення STORAGE=memory.
-"""
-
 from pydantic import BaseModel
 
 from lab4.models import Entity
@@ -13,7 +7,7 @@ from lab4.repositories.base import Repository
 class InMemoryRepository[ModelT: Entity](Repository[ModelT]):
     def __init__(self, model: type[ModelT]) -> None:
         self.model = model
-        self.items: dict[int, ModelT] = {}  # id -> запис
+        self.items: dict[int, ModelT] = {}
         self.next_id = 1
 
     def get(self, item_id: int) -> ModelT | None:

@@ -1,5 +1,3 @@
-"""REST-ресурс /routes (маршрути) і зв'язки маршруту з транспортом і зупинками."""
-
 from fastapi import APIRouter
 
 from lab4.dependencies import RouteRepo, RouteStopRepo, StopRepo, VehicleRepo
@@ -37,7 +35,6 @@ def delete_route(route_id: int, repo: RouteRepo) -> None:
 
 @router.get("/{route_id}/vehicles")
 def list_route_vehicles(route_id: int, routes: RouteRepo, vehicles: VehicleRepo) -> list[Vehicle]:
-    """Зв'язок Route 1:N Vehicle: машини маршруту."""
     get_or_404(routes, route_id)
     return vehicles.list_all(route_id=route_id)
 
@@ -46,7 +43,6 @@ def list_route_vehicles(route_id: int, routes: RouteRepo, vehicles: VehicleRepo)
 def list_route_stops(
     route_id: int, routes: RouteRepo, links: RouteStopRepo, stops: StopRepo
 ) -> list[Stop]:
-    """Зв'язок Route N:M Stop: зупинки маршруту в порядку проходження."""
     get_or_404(routes, route_id)
     ordered = sorted(links.list_all(route_id=route_id), key=lambda link: link.seq)
     return [get_or_404(stops, link.stop_id) for link in ordered]

@@ -1,5 +1,3 @@
-"""REST-ресурс /vehicles (транспортні засоби)."""
-
 from fastapi import APIRouter
 
 from lab4.dependencies import VehicleRepo

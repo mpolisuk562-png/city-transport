@@ -1,5 +1,3 @@
-"""Точка входу веб-застосунку: uv run uvicorn lab4.restapi:app --reload"""
-
 from fastapi import FastAPI
 
 from lab4.routers import drivers, route_stops, routes, stops, vehicles

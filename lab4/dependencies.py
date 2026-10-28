@@ -1,9 +1,3 @@
-"""Тут вирішується, яке сховище отримають роутери.
-
-Роутери просять лише абстрактний Repository (через Depends) і не знають,
-PostgreSQL під ним чи пам'ять. Сховище обирається змінною оточення STORAGE.
-"""
-
 from typing import Annotated, Any
 
 from fastapi import Depends
@@ -16,7 +10,6 @@ from lab4.repositories import InMemoryRepository, PostgresRepository, Repository
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
-# Дані в пам'яті мають жити між запитами, тому один репозиторій на модель.
 _memory_repos: dict[type[Entity], InMemoryRepository[Any]] = {}
 
 
@@ -48,7 +41,6 @@ def get_vehicle_repo(session: SessionDep) -> Repository[Vehicle]:
     return make_repository(Vehicle, session)
 
 
-# Короткі імена для параметрів роутерів: repo: VehicleRepo.
 RouteRepo = Annotated[Repository[Route], Depends(get_route_repo)]
 StopRepo = Annotated[Repository[Stop], Depends(get_stop_repo)]
 RouteStopRepo = Annotated[Repository[RouteStop], Depends(get_route_stop_repo)]

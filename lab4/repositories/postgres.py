@@ -1,8 +1,3 @@
-"""Репозиторій поверх PostgreSQL через ORM SQLModel.
-
-ORM сам будує параметризовані SQL-запити, тому SQL-ін'єкція неможлива.
-"""
-
 from pydantic import BaseModel
 from sqlalchemy import column
 from sqlmodel import Session, select
@@ -17,7 +12,7 @@ class PostgresRepository[ModelT: Entity](Repository[ModelT]):
         self.model = model
 
     def get(self, item_id: int) -> ModelT | None:
-        return self.session.get(self.model, item_id)  # SELECT ... WHERE id = %s
+        return self.session.get(self.model, item_id)
 
     def list_all(self, **filters: object) -> list[ModelT]:
         query = select(self.model)
@@ -28,17 +23,17 @@ class PostgresRepository[ModelT: Entity](Repository[ModelT]):
     def create(self, data: BaseModel) -> ModelT:
         obj = self.model(**data.model_dump())
         self.session.add(obj)
-        self.session.commit()  # INSERT
-        self.session.refresh(obj)  # підтягнути id, який видала БД
+        self.session.commit()
+        self.session.refresh(obj)
         return obj
 
     def update(self, obj: ModelT, data: BaseModel) -> ModelT:
         for field, value in data.model_dump().items():
             setattr(obj, field, value)
-        self.session.commit()  # UPDATE
+        self.session.commit()
         self.session.refresh(obj)
         return obj
 
     def delete(self, obj: ModelT) -> None:
         self.session.delete(obj)
-        self.session.commit()  # DELETE
+        self.session.commit()

@@ -1,18 +1,9 @@
-"""Дані для init_db: зупинки, маршрути, водії й транспорт Львова.
-
-Зупинки, маршрути і порядок зупинок — реальні (координати наближені, WGS-84).
-Водії та транспорт генеруються випадково з реалістичних складників:
-українських імен, львівських держномерів і реальних моделей техніки.
-Генератор отримує зерно (seed), тому той самий seed щоразу дає ті самі дані.
-"""
-
 from random import Random
 
 BUS = "bus"
 TRAM = "tram"
 TROLLEYBUS = "trolleybus"
 
-# (назва, широта, довгота) — вставляються сирим SQL через psycopg.
 STOPS: list[tuple[str, float, float]] = [
     ("Площа Ринок", 49.8419, 24.0316),
     ("Оперний театр", 49.8440, 24.0262),
@@ -44,7 +35,6 @@ STOPS: list[tuple[str, float, float]] = [
     ("Університет імені Франка", 49.8406, 24.0225),
 ]
 
-# (номер, тип, назва)
 ROUTES: list[tuple[str, str, str]] = [
     ("1", TRAM, "Головний вокзал — вул. Пекарська"),
     ("2", TRAM, "Вул. Шевченка — пл. Соборна"),
@@ -62,7 +52,6 @@ ROUTES: list[tuple[str, str, str]] = [
     ("53", BUS, "Автовокзал — Площа Галицька"),
 ]
 
-# Зупинки кожного маршруту в порядку проходження (порядковий номер = позиція + 1).
 ROUTE_STOPS: dict[tuple[str, str], list[str]] = {
     ("1", TRAM): [
         "Головний залізничний вокзал",
@@ -127,12 +116,10 @@ ROUTE_STOPS: dict[tuple[str, str], list[str]] = {
 }
 
 
-# --- Випадкова генерація водіїв і транспорту ------------------------------------------
-SEED = 42  # однакове зерно — однакові «випадкові» дані при кожному запуску
+SEED = 42
 DRIVER_COUNT = 20
 VEHICLE_COUNT = 35
 
-# (ім'я, по батькові) окремо для чоловіків і жінок, щоб рід збігався.
 MALE = [("Андрій", "Петрович"), ("Олег", "Іванович"), ("Тарас", "Богданович")]
 MALE += [("Юрій", "Романович"), ("Василь", "Ігорович"), ("Роман", "Степанович")]
 FEMALE = [("Ірина", "Василівна"), ("Марія", "Іванівна"), ("Наталія", "Степанівна")]
@@ -140,18 +127,15 @@ FEMALE += [("Олена", "Ярославівна"), ("Христина", "Ол�
 SURNAMES = ["Коваленко", "Шевчук", "Бондаренко", "Ткачук", "Мельник", "Кравець"]
 SURNAMES += ["Гнатюк", "Савчук", "Федорів", "Остапчук", "Дячук", "Бойко"]
 
-# Моделі для кожного типу транспорту: (модель, перший рік, останній рік випуску).
 MODELS = {
     TRAM: [("Electron T5L64", 2012, 2024), ("Tatra KT4", 1985, 1991)],
     TROLLEYBUS: [("Електрон Т19", 2014, 2024), ("Богдан Т70117", 2011, 2015)],
     BUS: [("Електрон А185", 2015, 2024), ("MAN Lion's City", 2018, 2023)],
 }
-PLATE_LETTERS = "АВЕІКМНОРСТХ"  # літери, що є і в кирилиці, і в латиниці
+PLATE_LETTERS = "АВЕІКМНОРСТХ"
 
 
 def generate_drivers(rng: Random) -> list[tuple[str, str, str]]:
-    """Повертає список (ПІБ, телефон, email)."""
-    # sample() дає різні числа, тож телефони гарантовано унікальні.
     numbers = rng.sample(range(10**7), DRIVER_COUNT)
     drivers = []
     for i, number in enumerate(numbers, start=1):
@@ -162,16 +146,13 @@ def generate_drivers(rng: Random) -> list[tuple[str, str, str]]:
 
 
 def generate_vehicles(rng: Random) -> list[tuple[str, str, int, tuple[str, str], int | None]]:
-    """Повертає список (держномер, модель, рік, маршрут, номер водія або None)."""
     route_keys = list(ROUTE_STOPS)
-    numbers = rng.sample(range(10**4), VEHICLE_COUNT)  # унікальні цифри держномерів
+    numbers = rng.sample(range(10**4), VEHICLE_COUNT)
     vehicles = []
     for i, number in enumerate(numbers):
-        # Перші машини розкладаємо по одній на маршрут, решту — випадково.
         route_key = route_keys[i] if i < len(route_keys) else rng.choice(route_keys)
         model, first_year, last_year = rng.choice(MODELS[route_key[1]])
         plate = f"ВС{number:04d}{rng.choice(PLATE_LETTERS)}{rng.choice(PLATE_LETTERS)}"
-        # Приблизно кожна шоста машина без водія.
         driver = rng.randint(1, DRIVER_COUNT) if rng.random() > 0.15 else None
         vehicles.append((plate, model, rng.randint(first_year, last_year), route_key, driver))
     return vehicles

@@ -1,5 +1,3 @@
-"""REST-ресурс /route-stops (асоціативна таблиця Route N:M Stop)."""
-
 from fastapi import APIRouter
 
 from lab4.dependencies import RouteStopRepo

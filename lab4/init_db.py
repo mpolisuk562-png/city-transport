@@ -1,12 +1,3 @@
-"""Скрипт ініціалізації БД: пересоздає таблиці та вставляє дані.
-
-Запуск: uv run python -m lab4.init_db
-
-Зупинки вставляються «сирим» SQL через psycopg (п. 6a методички) — параметризованим
-запитом: значення передаються окремо від тексту SQL через плейсхолдери %s.
-Решта даних вставляється через ORM SQLModel; водії й транспорт генеруються випадково.
-"""
-
 from random import Random
 
 import psycopg
@@ -14,8 +5,6 @@ from sqlmodel import Session, SQLModel, select
 
 from lab4.config import settings
 from lab4.db import engine
-
-# Імпорт моделей також реєструє їхні таблиці в SQLModel.metadata.
 from lab4.models import Driver, Entity, Route, RouteStop, Stop, Vehicle
 from lab4.seed_data import ROUTE_STOPS, ROUTES, SEED, STOPS, generate_drivers, generate_vehicles
 
@@ -26,13 +15,11 @@ def recreate_tables() -> None:
 
 
 def insert_stops_raw() -> None:
-    """Вставка зупинок сирим SQL. Жодних f-рядків: лише плейсхолдери %s."""
     with psycopg.connect(settings.psycopg_dsn) as conn, conn.cursor() as cur:
         cur.executemany(
             "INSERT INTO stops (name, latitude, longitude) VALUES (%s, %s, %s)",
             STOPS,
         )
-        # commit відбувається автоматично при виході з блоку with
 
 
 def insert_with_orm() -> None:
@@ -45,7 +32,7 @@ def insert_with_orm() -> None:
         }
         session.add_all(drivers)
         session.add_all(routes.values())
-        session.flush()  # БД видає id, але транзакція ще не завершена
+        session.flush()
 
         stop_ids = {stop.name: _id(stop) for stop in session.exec(select(Stop))}
         for key, names in ROUTE_STOPS.items():
@@ -66,7 +53,6 @@ def insert_with_orm() -> None:
 
 
 def _id(obj: Entity) -> int:
-    """id записа, який уже збережено в БД (після flush id точно є)."""
     assert obj.id is not None
     return obj.id
 

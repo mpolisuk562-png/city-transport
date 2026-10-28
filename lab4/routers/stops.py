@@ -1,5 +1,3 @@
-"""REST-ресурс /stops (зупинки)."""
-
 from fastapi import APIRouter
 
 from lab4.dependencies import StopRepo
