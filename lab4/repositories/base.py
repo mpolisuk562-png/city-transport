@@ -1,42 +1,35 @@
-"""Абстрактний узагальнений репозиторій — контракт, від якого залежать роутери.
+"""Абстрактний репозиторій — «стандарт розетки», від якого залежать роутери.
 
-Роутери не знають, де лежать дані (PostgreSQL, пам'ять, щось інше): нове сховище
-додається новим класом-нащадком, без змін у роутерах і в цьому класі (OCP).
+Роутери не знають, де лежать дані. Нове сховище додається новим класом-нащадком,
+без змін у роутерах і в цьому класі (принцип Open/Closed).
 """
 
 from abc import ABC, abstractmethod
-from collections.abc import Mapping, Sequence
 
 from pydantic import BaseModel
-from sqlmodel import SQLModel
+
+from lab4.models import Entity
 
 
-class Repository[ModelT: SQLModel](ABC):
+class Repository[ModelT: Entity](ABC):
     """CRUD над однією сутністю. ModelT — доменний клас із lab4.models."""
 
     @abstractmethod
-    def get(self, item_id: int) -> ModelT:
-        """Повертає запис або кидає NotFoundError."""
+    def get(self, item_id: int) -> ModelT | None:
+        """Повертає запис або None, якщо його немає."""
 
     @abstractmethod
-    def list(
-        self,
-        *,
-        limit: int,
-        offset: int,
-        filters: Mapping[str, object] | None = None,
-        order_by: str | None = None,
-    ) -> Sequence[ModelT]:
-        """Сторінка записів; filters — рівність полів (наприклад, {"route_id": 3})."""
+    def list_all(self, **filters: object) -> list[ModelT]:
+        """Усі записи; filters — рівність полів, напр. list_all(route_id=3)."""
 
     @abstractmethod
     def create(self, data: BaseModel) -> ModelT:
-        """Створює запис зі схеми; при конфлікті кидає ConflictError."""
+        """Створює запис із даних схеми."""
 
     @abstractmethod
-    def update(self, item_id: int, data: BaseModel) -> ModelT:
-        """Оновлює лише передані поля; NotFoundError або ConflictError."""
+    def update(self, obj: ModelT, data: BaseModel) -> ModelT:
+        """Замінює поля запису даними схеми."""
 
     @abstractmethod
-    def delete(self, item_id: int) -> None:
-        """Видаляє запис; NotFoundError або ConflictError (на запис посилаються)."""
+    def delete(self, obj: ModelT) -> None:
+        """Видаляє запис."""

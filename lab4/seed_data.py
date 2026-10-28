@@ -2,17 +2,15 @@
 
 Зупинки, маршрути і порядок зупинок — реальні (координати наближені, WGS-84).
 Водії та транспорт генеруються випадково з реалістичних складників:
-українських імен, кодів операторів, львівських серій номерів, моделей техніки.
+українських імен, львівських держномерів і реальних моделей техніки.
 Генератор отримує зерно (seed), тому той самий seed щоразу дає ті самі дані.
 """
 
 from random import Random
 
-from lab4.models import TransportType
-
-BUS = TransportType.BUS
-TRAM = TransportType.TRAM
-TROLLEYBUS = TransportType.TROLLEYBUS
+BUS = "bus"
+TRAM = "tram"
+TROLLEYBUS = "trolleybus"
 
 # (назва, широта, довгота) — вставляються сирим SQL через psycopg.
 STOPS: list[tuple[str, float, float]] = [
@@ -47,7 +45,7 @@ STOPS: list[tuple[str, float, float]] = [
 ]
 
 # (номер, тип, назва)
-ROUTES: list[tuple[str, TransportType, str]] = [
+ROUTES: list[tuple[str, str, str]] = [
     ("1", TRAM, "Головний вокзал — вул. Пекарська"),
     ("2", TRAM, "Вул. Шевченка — пл. Соборна"),
     ("6", TRAM, "Головний вокзал — вул. Липинського"),
@@ -65,7 +63,7 @@ ROUTES: list[tuple[str, TransportType, str]] = [
 ]
 
 # Зупинки кожного маршруту в порядку проходження (порядковий номер = позиція + 1).
-ROUTE_STOPS: dict[tuple[str, TransportType], list[str]] = {
+ROUTE_STOPS: dict[tuple[str, str], list[str]] = {
     ("1", TRAM): [
         "Головний залізничний вокзал",
         "Двірцева площа",
@@ -128,122 +126,52 @@ ROUTE_STOPS: dict[tuple[str, TransportType], list[str]] = {
     ("53", BUS): ["Автовокзал", "Вулиця Наукова", "Стрийський парк", "Площа Галицька"],
 }
 
-# --- Складники для генерації водіїв --------------------------------------------------
-MALE_NAMES = ["Андрій", "Олег", "Тарас", "Юрій", "Василь", "Роман", "Ігор", "Богдан", "Остап"]
-MALE_NAMES += ["Микола", "Степан", "Петро", "Дмитро", "Максим", "Назар", "Орест", "Володимир"]
-FEMALE_NAMES = ["Ірина", "Марія", "Наталія", "Олена", "Христина", "Софія", "Оксана", "Галина"]
-FEMALE_NAMES += ["Уляна", "Тетяна", "Леся", "Ольга", "Мар'яна", "Соломія", "Дарина", "Ганна"]
-MALE_PATRONYMICS = ["Петрович", "Іванович", "Миколайович", "Богданович", "Романович"]
-MALE_PATRONYMICS += ["Ігорович", "Михайлович", "Степанович", "Ярославович", "Васильович"]
-FEMALE_PATRONYMICS = ["Петрівна", "Іванівна", "Миколаївна", "Богданівна", "Романівна"]
-FEMALE_PATRONYMICS += ["Ігорівна", "Михайлівна", "Степанівна", "Ярославівна", "Василівна"]
-# Прізвища, однакові для чоловіків і жінок.
-SURNAMES = ["Коваленко", "Шевчук", "Бондаренко", "Ткачук", "Мельник", "Кравець", "Гнатюк"]
-SURNAMES += ["Савчук", "Федорів", "Остапчук", "Дячук", "Бойко", "Кушнір", "Лисенко", "Мороз"]
-SURNAMES += ["Сидоренко", "Олійник", "Романюк", "Возняк", "Гордієнко", "Стасюк", "Пономаренко"]
-# Коди мобільних операторів України: +380 XX ...
-OPERATOR_CODES = ["50", "63", "66", "67", "68", "73", "93", "95", "96", "97", "98", "99"]
 
-# --- Складники для генерації транспорту ----------------------------------------------
-# Серії номерів Львівської області.
-PLATE_REGIONS = ["ВС", "НС"]
-# Літери, які в номерних знаках України однаково пишуться кирилицею і латиницею.
-PLATE_LETTERS = "АВЕІКМНОРСТХ"
-# Моделі для кожного типу транспорту: (модель, перший рік випуску, останній рік випуску).
-MODELS: dict[TransportType, list[tuple[str, int, int]]] = {
-    TRAM: [
-        ("Electron T5L64", 2012, 2024),
-        ("Electron T3L44", 2014, 2020),
-        ("Tatra KT4", 1985, 1991),
-    ],
-    TROLLEYBUS: [
-        ("Електрон Т19", 2014, 2024),
-        ("Богдан Т70117", 2011, 2015),
-        ("Škoda 14Tr", 1985, 1992),
-    ],
-    BUS: [
-        ("Електрон А185", 2015, 2024),
-        ("Богдан А70132", 2010, 2016),
-        ("MAN Lion's City", 2018, 2023),
-    ],
+# --- Випадкова генерація водіїв і транспорту ------------------------------------------
+SEED = 42  # однакове зерно — однакові «випадкові» дані при кожному запуску
+DRIVER_COUNT = 20
+VEHICLE_COUNT = 35
+
+# (ім'я, по батькові) окремо для чоловіків і жінок, щоб рід збігався.
+MALE = [("Андрій", "Петрович"), ("Олег", "Іванович"), ("Тарас", "Богданович")]
+MALE += [("Юрій", "Романович"), ("Василь", "Ігорович"), ("Роман", "Степанович")]
+FEMALE = [("Ірина", "Василівна"), ("Марія", "Іванівна"), ("Наталія", "Степанівна")]
+FEMALE += [("Олена", "Ярославівна"), ("Христина", "Олегівна"), ("Софія", "Андріївна")]
+SURNAMES = ["Коваленко", "Шевчук", "Бондаренко", "Ткачук", "Мельник", "Кравець"]
+SURNAMES += ["Гнатюк", "Савчук", "Федорів", "Остапчук", "Дячук", "Бойко"]
+
+# Моделі для кожного типу транспорту: (модель, перший рік, останній рік випуску).
+MODELS = {
+    TRAM: [("Electron T5L64", 2012, 2024), ("Tatra KT4", 1985, 1991)],
+    TROLLEYBUS: [("Електрон Т19", 2014, 2024), ("Богдан Т70117", 2011, 2015)],
+    BUS: [("Електрон А185", 2015, 2024), ("MAN Lion's City", 2018, 2023)],
 }
-# Частка машин, за якими закріплено водія; решта — без водія (driver_id = NULL).
-DRIVER_ASSIGNED_SHARE = 0.85
-
-# Транслітерація для email за офіційними правилами (постанова КМУ № 55 від 2010 р.).
-TRANSLIT = {
-    "а": "a", "б": "b", "в": "v", "г": "h", "ґ": "g", "д": "d", "е": "e", "є": "ie",
-    "ж": "zh", "з": "z", "и": "y", "і": "i", "ї": "i", "й": "i", "к": "k", "л": "l",
-    "м": "m", "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u",
-    "ф": "f", "х": "kh", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "shch", "ь": "", "ю": "iu",
-    "я": "ia", "'": "",
-}  # fmt: skip
-# На початку слова ці літери передаються інакше: Юрій -> Yurii, а не Iurii.
-TRANSLIT_WORD_START = {"є": "ye", "ї": "yi", "й": "y", "ю": "yu", "я": "ya"}
-
-# (ПІБ, телефон, email)
-DriverRow = tuple[str, str, str]
-# (держномер, модель, рік, маршрут (номер, тип), індекс водія в списку водіїв або None)
-VehicleRow = tuple[str, str, int, tuple[str, TransportType], int | None]
+PLATE_LETTERS = "АВЕІКМНОРСТХ"  # літери, що є і в кирилиці, і в латиниці
 
 
-def transliterate(word: str) -> str:
-    result = []
-    for i, letter in enumerate(word.lower()):
-        if i == 0 and letter in TRANSLIT_WORD_START:
-            result.append(TRANSLIT_WORD_START[letter])
-        else:
-            result.append(TRANSLIT.get(letter, letter))
-    return "".join(result)
-
-
-def generate_drivers(rng: Random, count: int) -> list[DriverRow]:
-    """Водії з унікальними телефонами та email."""
-    drivers: list[DriverRow] = []
-    phones: set[str] = set()
-    emails: set[str] = set()
-    while len(drivers) < count:
-        if rng.random() < 0.5:
-            first_name, patronymic = rng.choice(MALE_NAMES), rng.choice(MALE_PATRONYMICS)
-        else:
-            first_name, patronymic = rng.choice(FEMALE_NAMES), rng.choice(FEMALE_PATRONYMICS)
-        surname = rng.choice(SURNAMES)
-
-        phone = f"+380{rng.choice(OPERATOR_CODES)}{rng.randrange(10**7):07d}"
-        if phone in phones:
-            continue
-        # Однофамільцям з однаковою першою літерою імені додаємо номер: o.melnyk2@...
-        login = f"{transliterate(first_name)[0]}.{transliterate(surname)}"
-        email, n = f"{login}@lvivtrans.ua", 2
-        while email in emails:
-            email, n = f"{login}{n}@lvivtrans.ua", n + 1
-
-        phones.add(phone)
-        emails.add(email)
-        drivers.append((f"{surname} {first_name} {patronymic}", phone, email))
+def generate_drivers(rng: Random) -> list[tuple[str, str, str]]:
+    """Повертає список (ПІБ, телефон, email)."""
+    # sample() дає різні числа, тож телефони гарантовано унікальні.
+    numbers = rng.sample(range(10**7), DRIVER_COUNT)
+    drivers = []
+    for i, number in enumerate(numbers, start=1):
+        first_name, patronymic = rng.choice(MALE + FEMALE)
+        full_name = f"{rng.choice(SURNAMES)} {first_name} {patronymic}"
+        drivers.append((full_name, f"+38067{number:07d}", f"driver{i}@lvivtrans.ua"))
     return drivers
 
 
-def generate_vehicles(rng: Random, count: int, driver_count: int) -> list[VehicleRow]:
-    """Транспорт з унікальними номерами; кожен маршрут отримує хоча б одну машину."""
-    route_keys = [(number, kind) for number, kind, _ in ROUTES]
-    extra = [rng.choice(route_keys) for _ in range(max(0, count - len(route_keys)))]
-    vehicles: list[VehicleRow] = []
-    plates: set[str] = set()
-    for route_key in (route_keys + extra)[:count]:
-        plate = _random_plate(rng)
-        while plate in plates:
-            plate = _random_plate(rng)
-        plates.add(plate)
-
-        # Модель обираємо під тип маршруту: трамвай не їздить тролейбусним маршрутом.
+def generate_vehicles(rng: Random) -> list[tuple[str, str, int, tuple[str, str], int | None]]:
+    """Повертає список (держномер, модель, рік, маршрут, номер водія або None)."""
+    route_keys = list(ROUTE_STOPS)
+    numbers = rng.sample(range(10**4), VEHICLE_COUNT)  # унікальні цифри держномерів
+    vehicles = []
+    for i, number in enumerate(numbers):
+        # Перші машини розкладаємо по одній на маршрут, решту — випадково.
+        route_key = route_keys[i] if i < len(route_keys) else rng.choice(route_keys)
         model, first_year, last_year = rng.choice(MODELS[route_key[1]])
-        has_driver = driver_count > 0 and rng.random() < DRIVER_ASSIGNED_SHARE
-        driver_idx = rng.randrange(driver_count) if has_driver else None
-        vehicles.append((plate, model, rng.randint(first_year, last_year), route_key, driver_idx))
+        plate = f"ВС{number:04d}{rng.choice(PLATE_LETTERS)}{rng.choice(PLATE_LETTERS)}"
+        # Приблизно кожна шоста машина без водія.
+        driver = rng.randint(1, DRIVER_COUNT) if rng.random() > 0.15 else None
+        vehicles.append((plate, model, rng.randint(first_year, last_year), route_key, driver))
     return vehicles
-
-
-def _random_plate(rng: Random) -> str:
-    letters = "".join(rng.choices(PLATE_LETTERS, k=2))
-    return f"{rng.choice(PLATE_REGIONS)}{rng.randrange(10**4):04d}{letters}"

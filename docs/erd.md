@@ -10,7 +10,7 @@ erDiagram
     ROUTES {
         int id PK
         varchar number UK "UNIQUE (number, transport_type)"
-        transport_type transport_type UK "bus | tram | trolleybus"
+        varchar transport_type UK "bus, tram або trolleybus"
         varchar name
     }
 
@@ -55,7 +55,7 @@ erDiagram
 
 ## Правила цілісності
 
-- **UNIQUE**: держномер, телефон і email водія; пара (номер, тип) маршруту, бо номер «1» може мати і трамвай, і автобус; пари (маршрут, зупинка) і (маршрут, seq) у `route_stops`.
-- **ON DELETE RESTRICT**: не можна видалити маршрут, за яким закріплено транспорт, і зупинку, що входить у маршрут. API відповідає `409 Conflict`.
+- **UNIQUE**: держномер, телефон і email водія; пара (номер, тип) маршруту, бо номер «1» може мати і трамвай, і автобус; пара (маршрут, seq) у `route_stops`.
+- **ON DELETE RESTRICT**: не можна видалити маршрут, за яким закріплено транспорт, і зупинку, що входить у маршрут. База відхиляє такий запит.
 - **ON DELETE CASCADE**: разом із маршрутом видаляється його список зупинок.
 - **ON DELETE SET NULL**: якщо водія видалили, машина лишається без закріпленого водія.
